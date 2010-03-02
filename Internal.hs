@@ -12,28 +12,27 @@ data FError = ErrParseFail String
             | NoError
             deriving (Show)
 
-data FState a = FState {
-    input :: String,
-    result :: a
+data FState = FState {
+    input :: String
 } deriving (Show)
 
 newtype FParser a = FParser { 
-    runParser :: (FState a -> (Either FError a, FState a)) 
+    runParser :: (FState -> (Either FError a, FState)) 
 }
         
 parse p str = 
     let (r, s) = runParser p $ newFState str 
     in (r, s)
 
-newFState str = FState { input = str, result = () }
+newFState str = FState { input = str }
 
-getState :: FParser (FState a)
+getState :: FParser FState
 getState = FParser $ \state -> (Right state, state)
 
-setState :: FState a -> FParser (FState a)
+setState :: FState -> FParser FState
 setState state = FParser $ \_ -> (Right state, state) 
 
-modifyState :: (FState a -> FState a) -> FParser (FState a )
+modifyState :: (FState -> FState) -> FParser FState
 modifyState f = do {
     state <- getState;
     setState $ f state;
