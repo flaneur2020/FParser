@@ -19,7 +19,7 @@ data FState = FState {
 newtype FParser a = FParser { 
     runParser :: (FState -> (Either FError a, FState)) 
 }
-        
+    
 parse p str = 
     let (r, s) = runParser p $ newFState str 
     in (r, s)
