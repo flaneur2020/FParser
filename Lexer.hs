@@ -3,6 +3,7 @@ module Lexer where
 import Data.Maybe
 import Control.Monad
 
+import Type
 import Internal
 import Combinator
 
