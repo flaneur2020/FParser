@@ -17,14 +17,13 @@ space = char ' '
 tab   = char '\t'
 ignore = many $ space <|> tab 
 
-word :: String -> FParser String 
-word str = do {
+sym :: String -> FParser String 
+sym str = do {
     --foldl (\acc x -> acc >> (char x)) (char x) xs;
-    sequence $ map char $ str;
-    return str;
+    res <- sequence $ map char $ str;
+    return res;
 }
 
 parens = between (sym "(") (sym ")")
 
-sym = word
 

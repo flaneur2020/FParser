@@ -1,25 +1,42 @@
 module Internal where
 
 import Control.Monad
-import Data.Maybe
+import System.IO.Unsafe
+import System.IO
+
+-- TODO : refactor (a, FSTate)
+-- FSTate { input , err }
+
+data FError = ErrParseFail String
+            | ErrEOF
+            | NoError
+            deriving (Show)
 
 newtype FState = FState {
     input :: String 
 } deriving (Show)
 
 newtype FParser a = FParser { 
-    runParser :: (FState -> (Maybe a, FState)) 
+    runParser :: (FState -> (Either FError a, FState)) 
 }
         
-parse p str = runParser p $ newFState str
+parse p str = 
+    let (r, s) = runParser p $ newFState str 
+    in (r, s)
 
 newFState str = FState $ str
 
 getState :: FParser FState
-getState = FParser $ \state -> (Just state, state)
+getState = FParser $ \state -> (Right state, state)
 
 setState :: FState -> FParser FState
-setState state = FParser $ \_ -> (Just state, state) 
+setState state = FParser $ \_ -> (Right state, state) 
+
+modifyState :: (FState -> FState) -> FParser FState
+modifyState f = do {
+    state <- getState;
+    setState $ f state;
+}
 
 getInput :: FParser String
 getInput = do {
@@ -29,8 +46,7 @@ getInput = do {
 
 setInput :: String -> FParser String
 setInput str = do {
-    state <- getState;
-    setState $ newFState str;
+    modifyState $ \s -> s { input = str };
     return str;
 }
 
@@ -38,7 +54,7 @@ setInput str = do {
 instance Monad FParser where 
 
     return v = 
-        FParser $ \state -> (Just v, state)
+        FParser $ \state -> (Right v, state)
 
     -- (>>=) :: FParser a -> (a -> FParser b) -> FParser b  
     (>>=) p f = 
@@ -46,30 +62,40 @@ instance Monad FParser where
             let 
                 (m, new_state) = runParser p state 
             in case m of 
-                Just v  -> runParser (f v) new_state 
-                Nothing -> (Nothing, state) 
+                Right v  -> runParser (f v) new_state 
+                Left err      -> (Left err, state)
 
 
 (<|>) :: FParser a -> FParser a -> FParser a
 (<|>) p1 p2 = do {
-    m1 <- test p1;
-    m2 <- test p2;
-    case (m1, m2) of 
+    ok1 <- test p1;
+    ok2 <- test p2;
+    str <- getInput;
+    case (ok1, ok2) of 
         (True, _) -> p1
         (_, True) -> p2
-        (_, _) -> orz
+        (_, _) -> orz $ "orz (" 
 }
 
-orz :: FParser a
-orz = FParser $ \state -> (Nothing, state)
+err :: FError -> FParser a
+err e = FParser $ \state -> (Left e, state)
+
+orz :: String -> FParser a
+orz str = err $ ErrParseFail str
 
 test :: FParser a -> FParser Bool
 test p = do {
-    state <- getState;
-    (m, _) <- return $ runParser p state;
-    case m of 
-        Just _  -> return True
-        Nothing -> return False
+    tmp_state <- getState;
+    case (input tmp_state) of
+        [] -> return True
+        _input@(c:_) -> (do {
+            (m, new_state) <- return $ runParser p $ newFState [c];
+            setState $ tmp_state;
+            return $ case m of 
+                Right _     -> True
+                Left ErrEOF -> True
+                Left _      -> False
+        })
 }
 
 -- root of atom!
@@ -83,8 +109,8 @@ char c = do {
                 setInput rest;
                 return c;
             })
-            else orz;
-        [] -> orz;
+            else orz $ "orz1"++(show (c, v));
+        [] -> err $ ErrEOF;
 } 
 
 

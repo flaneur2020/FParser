@@ -9,7 +9,7 @@ nop :: FParser ()
 nop = return ()
 
 oneOf :: String -> FParser Char 
-oneOf [] = orz
+oneOf [] = orz "oneOf"
 oneOf (x:xs) = do {
     foldl (\acc x -> acc <|> (char x)) (char x) $ xs;
 }
@@ -19,7 +19,7 @@ many p = many' [] p
 many' r p = do {
     ok <- test p;
     if ok then (do {
-        val <- p;    
+        val <- p;
         many' (r++[val]) p;
     })
     else 
@@ -36,15 +36,13 @@ many1 p = do {
 chain :: FParser a -> FParser (a -> a -> a) -> FParser a
 chain p op = do {
     x <- p;
-    xs <- many1 $ do {
+    xs <- many $ do {
         f <- op; 
         val <- p;
         return (`f` val);
     };
     return $ foldl (\acc f -> f acc) x xs;
-} <|> (do {
-    p;
-})
+} 
 
 between :: FParser a -> FParser b -> FParser c -> FParser c
 between open close p = do {

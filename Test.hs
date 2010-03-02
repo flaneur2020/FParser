@@ -7,32 +7,39 @@ import Internal
 import Combinator
 import Lexer
 
-test_word= parse (do {
-    (word "test") <|> (word "orz");
-}) 
 
-test_many str = runParser (do {
-    many $ char 'a';
-}) $ newFState str
 
 test_oneOf = parse (do {
-    many1 $ oneOf "abc"
-})  
-
-test_num = parse (do {
-    n<-number;    
-    return $ n;
-})
+    many1 $ oneOf "abcd"
+}) $ "abbbaafdfdfdf"
 
 test_blah = parse (do {
     number;    
-    sym "+";
+    addop;
     number;
-})
+}) $ "1+2"
+
+test_blah2 = parse (do {
+    number;
+    many $ do {
+        addop;
+        number;
+    }
+}) $ "1+2+2+2"
 
 test_parens = parse (do {
-    parens $ number;  
-})
+    parens $ parens $ number;  
+}) $ "((12))"
+
+test_chain = parse (do {
+    exp_;
+}) $ "1+1"
+exp_ = number `chain` addop;
+
+test_many = parse (do {
+    --many $ sym "test";    
+    many $ sym "test ";    
+}) $ "test test test  "
 
 expr = term `chain` addop
 term = factor `chain` mulop
@@ -44,5 +51,8 @@ addop =  do { sym "+"; return (+); }
 test_arith = parse expr
 
 main = do {
-    print $ test_arith "1+1"
+    print $ test_arith "1+ ";
+    print $ test_arith "((2*12+1*2)*2)*3 ";
+    print $ test_many;
 }
+
