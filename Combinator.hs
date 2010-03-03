@@ -9,12 +9,11 @@ import Internal
 nop :: FParser ()
 nop = return ()
 
-oneOf :: String -> FParser Char 
-oneOf [] = orz 
-oneOf (x:xs) = do {
-    foldl (\acc x -> acc <|> (char x)) (char x) $ xs;
-}
+char :: Char -> FParser Char
+char c = satisfy (==c)
 
+oneOf :: String -> FParser Char 
+oneOf str = satisfy (`elem` str) 
 
 many :: FParser a -> FParser [a]
 many p = many' [] p

@@ -6,6 +6,12 @@ import System.IO
 
 import Type
 
+err :: FError -> FParser a
+err e = FParser $ \state -> (Left e, state)
+
+orz :: FParser a
+orz = err $ ErrParseFail ""
+
 parse p str = 
     let (r, s) = runParser p $ newFState str 
     in (r, s)
@@ -23,12 +29,6 @@ parse p str =
     ok (Left (ErrParseFail _)) = False
     ok (Left (ErrEOF)) = True
     ok (Right _) = True
-
-err :: FError -> FParser a
-err e = FParser $ \state -> (Left e, state)
-
-orz :: FParser a
-orz = err $ ErrParseFail ""
 
 testParser p [] = runParser p $ newFState ""
 testParser p (c:_) = runParser p $ newFState [c]
@@ -53,8 +53,6 @@ satisfy f = do {
         [] -> err $ ErrEOF;
 }
 
-char :: Char -> FParser Char
-char c = satisfy (==c)
 
 
 
