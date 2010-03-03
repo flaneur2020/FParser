@@ -12,14 +12,17 @@ parse p str =
 
 (<|>) :: FParser a -> FParser a -> FParser a
 (<|>) p1 p2 = do {
-    ok1 <- test p1;
-    ok2 <- test p2;
     str <- getInput;
-    case (ok1, ok2) of 
+    (res1, _) <- return $ testParser p1 str;
+    (res2, _) <- return $ testParser p2 str;
+    case (ok res1, ok res2) of 
         (True, _) -> p1
         (_, True) -> p2
-        (_, _) -> orz 
-}
+        _         -> orz
+} where
+    ok (Left (ErrParseFail _)) = False
+    ok (Left (ErrEOF)) = True
+    ok (Right _) = True
 
 err :: FError -> FParser a
 err e = FParser $ \state -> (Left e, state)
@@ -27,30 +30,8 @@ err e = FParser $ \state -> (Left e, state)
 orz :: FParser a
 orz = err $ ErrParseFail ""
 
-
-test :: FParser a -> FParser Bool
-test p = do {
-    tmp_state <- getState;
-    case (input tmp_state) of
-        [] -> return True
-        _input -> test_char _input p 
-}
-
 testParser p [] = runParser p $ newFState ""
 testParser p (c:_) = runParser p $ newFState [c]
-
-test_char :: String -> FParser a -> FParser Bool
-test_char (c:_) p = test_str [c] p 
-
-test_str :: String -> FParser a -> FParser Bool
-test_str [] p  = return True
-test_str str p = do {
-    (m, new_state) <- return $ runParser p $ newFState str;
-    return $ case m of 
-        Right _     -> True
-        Left ErrEOF -> True
-        Left _      -> False
-}
 
 -- root of atom!
 satisfy :: (Char -> Bool) -> FParser Char
