@@ -27,13 +27,6 @@ err e = FParser $ \state -> (Left e, state)
 orz :: FParser a
 orz = err $ ErrParseFail ""
 
-try :: FParser a -> FParser a 
-try p = do {
-    _input <- getInput;
-    ok <- test_str _input p;
-    if ok   then p
-            else orz;
-}
 
 test :: FParser a -> FParser Bool
 test p = do {
