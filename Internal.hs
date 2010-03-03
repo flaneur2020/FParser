@@ -18,14 +18,22 @@ parse p str =
     case (ok1, ok2) of 
         (True, _) -> p1
         (_, True) -> p2
-        (_, _) -> orz $ "orz (" 
+        (_, _) -> orz 
 }
 
 err :: FError -> FParser a
 err e = FParser $ \state -> (Left e, state)
 
-orz :: String -> FParser a
-orz str = err $ ErrParseFail str
+orz :: FParser a
+orz = err $ ErrParseFail ""
+
+try :: FParser a -> FParser a 
+try p = do {
+    _input <- getInput;
+    ok <- test_str _input p;
+    if ok   then p
+            else orz;
+}
 
 test :: FParser a -> FParser Bool
 test p = do {
@@ -49,23 +57,27 @@ test_str str p = do {
 }
 
 -- root of atom!
-char :: Char -> FParser Char
-char c = do {
+satisfy :: (Char -> Bool) -> FParser Char
+satisfy f = do {
     state   <- getState;
-    str     <- return $ input $ state;
+    _input  <- return $ input $ state;
     (x, y)  <- return $ pos $ state;
-    case str of 
+    case _input of 
         (v:rest) -> 
-            if (c==v) then (do {
+            if (f v) then (do {
                 -- inc the line number
-                if (c=='\n') then setPos $ (0, y+1)
+                if (v=='\n') then setPos $ (0, y+1)
                              else setPos $ (x+1, y);
+                -- go on~
                 setInput rest;
-                return c;
+                return v;
             })
-            else orz $ "orz1"++(show (c, v));
+            else orz; 
         [] -> err $ ErrEOF;
-} 
+}
+
+char :: Char -> FParser Char
+char c = satisfy (==c)
 
 
 

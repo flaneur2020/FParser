@@ -51,8 +51,14 @@ addop =  do { sym "+"; return (+); }
 test_arith = parse expr
 
 main = do {
+    print $ test_eof;
     print $ test_arith "1+ ";
     print $ test_arith "((2*12+1*2)*2)*3 ";
     print $ test_many;
 }
 
+
+test_eof = parse (do {
+    char 'c';
+    char 'a';
+}) $ "ca"

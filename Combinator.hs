@@ -10,7 +10,7 @@ nop :: FParser ()
 nop = return ()
 
 oneOf :: String -> FParser Char 
-oneOf [] = orz "oneOf"
+oneOf [] = orz 
 oneOf (x:xs) = do {
     foldl (\acc x -> acc <|> (char x)) (char x) $ xs;
 }
