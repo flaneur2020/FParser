@@ -18,13 +18,13 @@ oneOf (x:xs) = do {
 many :: FParser a -> FParser [a]
 many p = many' [] p
 many' r p = do {
-    ok <- test p;
-    if ok then (do {
-        val <- p;
-        many' (r++[val]) p;
-    })
-    else 
-        return r;
+    tmp <- getState;
+    case (runParser p tmp) of 
+        (Left _, _) -> return r
+        (Right _, _) -> (do {
+            val <- p;
+            many' (r++[val]) p;
+        })
 }
 
 many1 :: FParser a -> FParser [a]
