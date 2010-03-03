@@ -15,16 +15,20 @@ oneOf (x:xs) = do {
     foldl (\acc x -> acc <|> (char x)) (char x) $ xs;
 }
 
+
 many :: FParser a -> FParser [a]
 many p = many' [] p
 many' r p = do {
-    tmp <- getState;
-    case (runParser p tmp) of 
-        (Left _, _) -> return r
-        (Right _, _) -> (do {
-            val <- p;
-            many' (r++[val]) p;
-        })
+    str <- getInput;
+    case str of 
+        [] -> return r
+        _  -> 
+            case (testParser p str) of 
+                (Left (ErrParseFail _), _) -> return r
+                _ -> (do {
+                    val <- p;
+                    many' (r++[val]) p;
+                })
 }
 
 many1 :: FParser a -> FParser [a]

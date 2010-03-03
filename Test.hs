@@ -51,9 +51,9 @@ addop =  do { sym "+"; return (+); }
 test_arith = parse expr
 
 main = do {
+    print $ test_arith $ "1+(10*2+2*(19-2))";
     print $ test_many  $ "test test test ";
     print $ test_many  $ "test test test  ";
-    print $ test_arith $ "1+(10*2+2*(19-2))";
 }
 
 

@@ -36,6 +36,9 @@ test p = do {
         _input -> test_char _input p 
 }
 
+testParser p [] = runParser p $ newFState ""
+testParser p (c:_) = runParser p $ newFState [c]
+
 test_char :: String -> FParser a -> FParser Bool
 test_char (c:_) p = test_str [c] p 
 
