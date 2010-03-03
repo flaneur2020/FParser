@@ -39,7 +39,7 @@ exp_ = number `chain` addop;
 test_many = parse (do {
     --many $ sym "test";    
     many $ sym "test ";    
-}) $ "test test test  "
+});
 
 expr = term `chain` addop
 term = factor `chain` mulop
@@ -51,10 +51,8 @@ addop =  do { sym "+"; return (+); }
 test_arith = parse expr
 
 main = do {
-    print $ test_eof;
-    print $ test_arith "1+ ";
-    print $ test_arith "((2*12+1*2)*2)*3 ";
-    print $ test_many;
+    print $ test_many  $ "test test test ";
+    print $ test_many  $ "test test test  ";
 }
 
 
